@@ -6,15 +6,28 @@ const { buildSchema } = require('graphql');
 
 const app = express();
 
+const expenses = [];
+
 app.use(bodyParser.json());
 
 app.use('/graphql', graphqlHttp({
     schema: buildSchema(`
+        type Expense {
+            _id: ID!
+            title: String!
+            price: Float!
+            date: String!
+        }
+        input ExpenseInput {
+            title: String!
+            price: Float!
+            date: String!
+        }
         type RootQuery {
-            expenses: [String!]!
+            expenses: [Expense!]!
         }
         type RootMutation {
-            createExpense(name: String): String
+            createExpense(expenseInput: ExpenseInput): Expense
         }
         schema {
             query: RootQuery
@@ -23,11 +36,17 @@ app.use('/graphql', graphqlHttp({
     `),
     rootValue: {
         expenses: () => {
-            return ['Romantic Cooking', 'Sailing'];
+            return expenses;
         },
         createExpense: (args) => {
-            const expenseName = args.name;
-            return expenseName;
+            const expense = {
+                _id : Math.random().toString(),
+                title: args.expenseInput.title,
+                price: +args.expenseInput.price,
+                date: args.expenseInput.date
+            };
+            expenses.push(expense);
+            return expense;
         }
     },
     graphiql: true
